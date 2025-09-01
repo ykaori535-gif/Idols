@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Idol's Run</title>
+
+  <style>
+
+    :root{
+      --bg:#0a0f1f;
+      --panel:#0b1222ea;
+      --chip:#0d1630b3;
+      --txt:#e5e7eb;
+      --sub:#cbd5e1;
+      --borde:#ffffff2a;
+      --acento:#22d3ee;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      display:grid;place-items:center;overflow:hidden;color:var(--txt);
+      background: radial-gradient(1200px 800px at 50% -20%, #0e1830 0%, var(--bg) 60%);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      -webkit-user-select:none; user-select:none;
+      -webkit-touch-callout:none;
+    }
+
+    .marco{
+      position:relative;width:min(98vw,1180px);aspect-ratio:16/9;border-radius:26px;overflow:hidden;
+      background:linear-gradient(180deg,#0b1023 0%,#0e182a 100%);
+      box-shadow:0 40px 100px #000b, inset 0 0 0 1px #ffffff14, inset 0 0 30px #000c;
+      animation: popin .35s ease;
+    }
+    @keyframes popin{from{transform:scale(.985);opacity:.9}to{transform:scale(1);opacity:1}}
+
+    canvas{
+      width:100%;height:100%;display:block;image-rendering:pixelated;
+      touch-action:none; 
+    }
+
+    .hud{
+      position:absolute;inset:10px 10px auto 10px;display:flex;gap:10px;justify-content:space-between;
+      pointer-events:none;width:calc(100% - 20px);align-items:flex-start;flex-wrap:wrap;
+      z-index:20; 
+    }
+    .grupo-izq,.grupo-der{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .chip{
+      pointer-events:auto;background:linear-gradient(180deg,#0e1533cc,#0b1027cc);
+      border:1px solid var(--borde); padding:7px 12px; border-radius:999px;
+      font-weight:800;font-size:13px;backdrop-filter: blur(10px) saturate(120%);
+      letter-spacing:.2px;display:inline-flex;align-items:center;gap:8px;
+      box-shadow:0 8px 24px #0006, inset 0 0 0 1px #ffffff10;
+    }
+    .chip .dot{width:8px;height:8px;border-radius:999px;background:var(--acento)}
+    .chip.good .dot{background:var(--ok)}
+    .chip.warn .dot{background:var(--warn)}
+
+    .btn-ghost{
+      pointer-events:auto;user-select:none;background:linear-gradient(180deg,#131b3a99,#0c1429a6);
+      border:1px solid var(--borde);color:var(--txt);height:36px;padding:0 14px;border-radius:12px;font-weight:800;
+      backdrop-filter: blur(8px); cursor:pointer; display:inline-flex; align-items:center; gap:8px; touch-action:manipulation;
+      transition: transform .05s ease, box-shadow .15s ease, border-color .15s ease;
+      box-shadow: 0 8px 22px #0007, inset 0 0 0 1px #ffffff10;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn-ghost:hover{box-shadow:0 10px 26px #0009, inset 0 0 0 1px #ffffff22}
+    .btn-ghost:active{transform:scale(.98)}
+
+
+    .controles{
+      position:absolute;inset:auto 12px 12px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
+      z-index:25; /* ▶ encima del canvas */
+      pointer-events:auto;
+    }
+    .btn-touch{
+      user-select:none;-webkit-user-select:none;touch-action:none; 
+      background:linear-gradient(180deg,#1b234799,#101b3099);
+      border:1px solid var(--borde); color:var(--txt); padding:12px 14px; border-radius:14px; font-weight:900;
+      text-align:center; backdrop-filter: blur(6px); cursor:pointer; letter-spacing:.3px;
+      box-shadow: 0 15px 40px #0007, inset 0 0 0 1px #ffffff12;
+      transition: transform .05s ease, box-shadow .15s ease, border-color .15s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn-touch.primary{ background:#22d3ee22; border-color:#22d3ee77 }
+    .btn-touch.alt{ background:#a855f722; border-color:#a855f777 }
+    .btn-touch.fire{ background:#f59e0b22; border-color:#f59e0b77 }
+    .btn-touch:active{ transform:scale(.98) }
+
+    .overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#0b1023cc,#0e182acc);backdrop-filter:blur(5px); z-index:30;}
+    .panel{
+      background: radial-gradient(120% 140% at 10% -20%, #182446cc 0%, #0c142acc 40%, #0a1020ee 100%);
+      border: 1px solid #ffffff1f; border-radius: 20px; padding: 18px; width: min(94%, 720px);
+      box-shadow: 0 30px 80px #000a, inset 0 0 0 1px #ffffff10;
+      animation: float .5s ease;
+    }
+    @keyframes float{from{transform:translateY(6px);opacity:.85}to{transform:translateY(0);opacity:1}}
+    .panel h1{margin:0 0 6px;font-size:22px; letter-spacing:.3px}
+    .panel p{margin:8px 0;color:var(--sub);line-height:1.35}
+    .fila{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .campo{display:flex;align-items:center;gap:8px;background:#0f172a;border:1px solid var(--borde);border-radius:12px;padding:8px 10px; box-shadow: inset 0 0 0 1px #ffffff12;}
+    .campo select{appearance:none;background:transparent;border:none;color:var(--txt);font-weight:800;letter-spacing:.2px;outline:none;cursor:pointer}
+    .acciones{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .btn{
+      background:linear-gradient(180deg,#1b2a3f,#0d1a2c); border:1px solid var(--borde); color:var(--txt); padding:10px 14px;
+      border-radius:14px; font-weight:900; letter-spacing:.35px; cursor:pointer; box-shadow: 0 16px 44px #0009, inset 0 0 0 1px #ffffff13;
+      transition: transform .05s ease, box-shadow .2s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn.primary{
+      background:linear-gradient(180deg,#183147,#0f2333);
+      border-color:#22d3ee77;
+      box-shadow: 0 18px 46px #0ff3, inset 0 0 0 1px #22d3ee33;
+      text-shadow: 0 0 10px #22d3ee55;
+    }
+    .btn:active{transform:translateY(1px)}
+    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background:#0f172a; border:1px solid var(--borde); border-bottom-width:3px; border-radius:6px; padding:2px 6px; margin:0 2px; font-size:12px}
+
+    /* ===== Overlay “gira tu teléfono” ===== */
+    .rotate-overlay{position:absolute;inset:0;display:none;place-items:center;background:linear-gradient(180deg,#0b1023f0,#0e182af0);backdrop-filter:blur(6px);z-index:40;text-align:center;padding:20px}
+    .rotate-box{background:#0c1426;border:1px solid #ffffff22;border-radius:18px;padding:20px;max-width:520px;box-shadow:0 20px 60px #000b}
+    .rotate-title{font-size:20px;margin:0 0 6px}
+    .rotate-sub{color:#cbd5e1;margin:0 0 10px}
+    .rotate-emoji{font-size:48px;margin-bottom:8px}
+
+    /* Ajustes móviles */
+    @media (max-width: 640px){
+      .chip{font-size:12px;padding:6px 9px}
+      .btn-ghost{height:34px;padding:0 12px}
+      .btn-touch{padding:12px 10px;font-size:14px}
+      .panel{padding:14px}
+      .panel h1{font-size:20px}
+    }
+  </style>
+</head>
+<body>
+  <div class="marco" id="marco">
+    <canvas id="lienzo" width="960" height="540" aria-label="Runner Blaster"></canvas>
+
+    <!-- ================= HUD (marcadores y acciones rápidas) ================= -->
+    <div class="hud">
+      <div class="grupo-izq">
+        <div class="chip" id="hudPuntaje"><span class="dot"></span> Puntos: 0 • Kills: 0</div>
+        <div class="chip good" id="hudVidas"><span class="dot"></span> Vidas: 6</div>
+        <div class="chip" id="hudNivel"><span class="dot"></span> Mundo 1-1</div>
+        <div class="chip warn" id="hudJefe" style="display:none"><span class="dot"></span> Jefe ❤❤❤❤❤❤</div>
+        <div class="chip" id="hudEscudo" style="display:none"><span class="dot"></span> Escudo x0</div>
+      </div>
+      <div class="grupo-der">
+        <button class="btn-ghost" id="btnPausa">⏸ Pausa</button>
+        <button class="btn-ghost" id="btnSilencioTopo">🔊</button>
+      </div>
+    </div>
+
+    <!-- ================= Controles táctiles (runner avanza solo) ================= -->
+    <div class="controles">
+      <div class="btn-touch primary" id="btnSalto">⤒ Saltar</div>
+      <div class="btn-touch alt"    id="btnSuper">⤒ Súper</div>
+      <div class="btn-touch fire"   id="btnDisparo">🔫 Disparar</div>
+    </div>
+
+    <!-- ================= Overlay principal (inicio / pausa / fin / siguiente) ================= -->
+    <div class="overlay" id="overlay">
+      <div class="panel">
+        <h1>🎮 Idol's Run –  Pro</h1>
+        <p>
+          <strong>Móvil/Tablet:</strong> usa <em>Saltar</em>, <em>Súper</em> y <em>Disparar</em> (mantén para autofire).<br>
+          <strong>Teclado:</strong> Dispara <span class="kbd">X</span>/<span class="kbd">Ctrl</span>,
+          Salta <span class="kbd">Z</span>/<span class="kbd">Espacio</span>, Súper <span class="kbd">Shift</span>/<span class="kbd">A</span>, Pausa <span class="kbd">P</span>.
+        </p>
+        <div class="fila">
+          <label class="campo">⚙️ Dificultad
+            <!-- Las dificultades SIEMPRE afectan balas enemigas, cadencia y tipos -->
+            <select id="selDificultad">
+              <option selected>Fácil</option>
+              <option>Medio</option>
+              <option>Pro</option>
+            </select>
+          </label>
+        </div>
+        <div class="acciones">
+          <button class="btn primary" id="btnEmpezar">Empezar</button>
+          <button class="btn" id="btnSilencio">🔊 Sonido</button>
+        </div>
+        <p style="opacity:.8;margin-top:8px">
+          Fondos: <strong>Nivel 1 = fondo1.jpg</strong>, <strong>Nivel 2 = fondo2.jpg</strong>, <strong>Nivel 3 = Ciber</strong>.
+        </p>
+      </div>
+    </div>
+
+    <!-- Overlay “gira tu teléfono” para móviles en vertical -->
+    <div class="rotate-overlay" id="rotateOverlay" aria-hidden="true">
+      <div class="rotate-box">
+        <div class="rotate-emoji">🔄📱</div>
+        <h2 class="rotate-title">Gira tu dispositivo</h2>
+        <p class="rotate-sub">Para jugar mejor, usa la pantalla en <strong>horizontal</strong>.</p>
+        <p style="font-size:12px;opacity:.8">Si ya está en horizontal, desbloquea la rotación del sistema.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===========================================================
+       UTILIDADES, CANVAS y AUDIO
+       =========================================================== */
+    const limitar=(n,a,b)=>Math.max(a,Math.min(b,n));  
+    const aleatorio=(a,b)=>Math.random()*(b-a)+a;      
+
+    // Canvas responsivo (dpi-aware)
+    const marco=document.getElementById('marco');
+    const lienzo=document.getElementById('lienzo');
+    const ctx=lienzo.getContext('2d',{alpha:true, desynchronized:true});
+    const RPD=Math.min(window.devicePixelRatio||1,2);
+    function ajustar(){
+      const r=marco.getBoundingClientRect();
+      lienzo.width=Math.floor(r.width*RPD);
+      lienzo.height=Math.floor(r.height*RPD);
+    }
+    ajustar();
+    addEventListener('resize',()=>{ajustar(); checkOrientationOverlay();});
+
+    const ANCHO=()=>lienzo.width, ALTO=()=>lienzo.height;
+
+    // Audio (desbloqueo en móvil con primer toque/tecla)
+    const ctxAudio=new (window.AudioContext||window.webkitAudioContext)();
+    let silenciado=false, audioDesbloqueado=false;
+    function bip(freq=440,dur=.06,tipo='square',vol=.06){
+      if(silenciado) return;
+      const o=ctxAudio.createOscillator(), g=ctxAudio.createGain();
+      o.type=tipo; o.frequency.value=freq; g.gain.value=vol;
+      o.connect(g).connect(ctxAudio.destination);
+      const t=ctxAudio.currentTime; o.start(t); o.stop(t+dur);
+    }
+    function desbloquearAudio(){
+      if(audioDesbloqueado) return;
+      if(ctxAudio.state!=='running'){ ctxAudio.resume && ctxAudio.resume(); }
+      try{ const b=ctxAudio.createBuffer(1,1,22050), s=ctxAudio.createBufferSource(); s.buffer=b; s.connect(ctxAudio.destination); s.start(0); }catch(_){}
+      audioDesbloqueado=true;
+    }
+    ['pointerdown','touchstart','mousedown','keydown'].forEach(ev=>addEventListener(ev,desbloquearAudio,{once:true,passive:true}));
+
+    /* ===========================================================
+       SPRITES OPCIONALES (si no existen, se dibujan rectángulos)
+       =========================================================== */
+    const RUTA_JUGADOR='personaje.png';
+    const RUTA_BOT='bot.png';
+    const RUTA_JEFE='jefe.png';
+    const imgJugador=new Image(); let jugadorListo=false; imgJugador.onload=()=>jugadorListo=true; imgJugador.src=RUTA_JUGADOR;
+    const imgBot=new Image();     let botListo=false;     imgBot.onload=()=>botListo=true;         imgBot.src=RUTA_BOT;
+    const imgJefe=new Image();    let jefeListo=false;    imgJefe.onload=()=>jefeListo=true;       imgJefe.src=RUTA_JEFE;
+
+    /* ===========================================================
+       === FONDOS por NIVEL con IMAGEN ===
+       - NIVEL 1 → 'Amanecer' = fondo1.jpg
+       - NIVEL 2 → 'Espacio'  = fondo2.jpg
+       - NIVEL 3 → 'Ciber'    = SIN imagen (siempre el fondo ciber dibujado)
+       =========================================================== */
+    const RUTA_FONDO = {
+      'Amanecer': 'fondo1.jpg', // Nivel 1
+      'Espacio' : 'fondo2.jpg', // Nivel 2
+      'Ciber'   : null          // Nivel 3: sin imagen → se dibuja el tema ciber
+    };
+    // Cargar solo las imágenes que tienen ruta
+    const fondos = {};
+    for (const [tema, src] of Object.entries(RUTA_FONDO)) {
+      if(!src) continue;
+      const img = new Image(); img.src = src; fondos[tema] = img;
+    }
+
+    /* ===========================================================
+       HUD / BOTONES
+       =========================================================== */
+    const hudPuntaje=document.getElementById('hudPuntaje');
+    const hudVidas=document.getElementById('hudVidas');
+    const hudNivel=document.getElementById('hudNivel');
+    const hudJefe=document.getElementById('hudJefe');
+    const hudEscudo=document.getElementById('hudEscudo');
+    const overlay=document.getElementById('overlay');
+    const rotateOverlay=document.getElementById('rotateOverlay');
+
+    const btnEmpezar=document.getElementById('btnEmpezar');
+    const btnSilencio=document.getElementById('btnSilencio');
+    const btnSilencioTopo=document.getElementById('btnSilencioTopo');
+    const btnPausa=document.getElementById('btnPausa');
+    const btnSalto=document.getElementById('btnSalto');
+    const btnSuper=document.getElementById('btnSuper');
+    const btnDisparo=document.getElementById('btnDisparo');
+    const selDificultad=document.getElementById('selDificultad');
+
+    /* ===========================================================
+       DIFICULTADES – SIEMPRE ACTIVAS (Fácil / Medio / Pro)
+       =========================================================== */
+    const DIFICULTADES = {
+      'Fácil': {
+        vidas: 6,
+        aparicionCada: 1100, aparicionMin: 820, aparicionDec: 12,
+        velBot: 0.06, killsBoss: 10,
+        tasaDisparo: 190,
+        tiposPermitidos: ['basico','tirador'],
+        cdTirador: 3200,
+        velBalaEnemiga: 0.14,
+        vidaBalaEnemiga: 1700,
+        tiradorRafaga: 1,
+        tiradorDispersion: 0.0
+      },
+      'Medio': {
+        vidas: 4,
+        aparicionCada: 900,  aparicionMin: 560, aparicionDec: 14,
+        velBot: 0.09, killsBoss: 14,
+        tasaDisparo: 200,
+        tiposPermitidos: ['basico','saltarin','tirador','kamikaze','blindado'],
+        cdTirador: 1700,
+        velBalaEnemiga: 0.26,
+        vidaBalaEnemiga: 2400,
+        tiradorRafaga: 2,
+        tiradorDispersion: 0.12
+      },
+      'Pro': {
+        vidas: 3,
+        aparicionCada: 820,  aparicionMin: 380, aparicionDec: 18,
+        velBot: 0.11, killsBoss: 18,
+        tasaDisparo: 180,
+        tiposPermitidos: ['basico','saltarin','tirador','kamikaze','blindado'],
+        cdTirador: 1000,
+        velBalaEnemiga: 0.36,
+        vidaBalaEnemiga: 3000,
+        tiradorRafaga: 3,
+        tiradorDispersion: 0.18
+      }
+    };
+
+    /* ===========================================================
+       ESTADO GLOBAL
+       =========================================================== */
+    const estado={
+      corriendo:false, pausado:false, ultimo:0,
+      puntaje:0, vidas:6, nombreNivel:'Mundo 1-1', nivel:1,
+      dificultad:'Fácil', parametros:DIFICULTADES['Fácil'],
+
+      // Tema visual por nivel (ver temaPorNivel)
+      temaFondo:'Amanecer',
+
+      // Entrada
+      teclas:{izquierda:false,derecha:false,saltar:false,super:false,disparar:false},
+
+      // Físicas/entidades
+      camaraX:0, gravedad:0.0015, friccionBase:0.9, friccion:0.9,
+      jugador:null, enemigos:[], plataformas:[], jefe:null,
+      balas:[], balasEnemigas:[], trampas:[], powerups:[],
+
+      // Progresión/arma
+      puntoControlX:40, bajas:0,
+      temporizadorAparicion:0, aparicionCada:1200,
+      balasPorDisparo:1, enfriamientoDisparo:0, tasaDisparo:180, factorSuperSalto:1.6,
+      jefeAparecido:false, tiempoMejoraBalas:0, escudo:0, siguienteNivel:false,
+
+      // meta de bots por nivel
+      generadosNivel:0
+    };
+
+    // ========= LÍMITES y OBJETIVOS DE BOTS =========
+    const MAX_BOTS_CONCURRENTES = 120;
+    const OBJETIVO_BOTS_POR_NIVEL = 120;
+
+
+    function temaPorNivel(n){
+      return n===1 ? 'Amanecer'
+           : n===2 ? 'Espacio'
+           : 'Ciber';
+    }
+    function factorDisparoNivel(n){ return n===1 ? 1.00 : n===2 ? 0.85 : 0.70; }
+
+    /* ===========================================================
+       ENTIDADES
+       =========================================================== */
+    function crearJugador(){
+      return { x:40,y:380,w:32,h:32, vx:0.15,vy:0, velocidad:0.32, salto:0.55,
+               enSuelo:false, invulnerable:0, mirando:1, _plataforma:null };
+    }
+    function crearEnemigo(x,y,tipo='basico'){
+      const base=estado.parametros.velBot;
+      const e={ tipo,tipoBase:'bot', x,y,w:28,h:28,
+        vx:base*(Math.random()<.5?-1:1), vy:0, enSuelo:false, muerto:false,
+        patrulla:[x-60,x+60], hp:1, cd:0
+      };
+      if(tipo==='blindado') e.hp=3;
+      if(tipo==='kamikaze') e.vx=base*1.4*(Math.random()<.5?-1:1);
+      if(tipo==='tirador')  e.cd=estado.parametros.cdTirador;
+      if(tipo==='saltarin') e.cd=600;
+      return e;
+    }
+    function crearJefe(x,y){
+      let hpBase=(estado.nivel===1?10:(estado.nivel===2?14:18));
+      if(estado.dificultad==='Fácil') hpBase=Math.max(4,Math.round(hpBase*0.6));
+      if(estado.dificultad==='Pro')   hpBase=Math.round(hpBase*1.15);
+      return { tipo:'jefe',x,y,w:76,h:76,vx:0.16,vy:0,enSuelo:false,
+               hp:hpBase,hpMax:hpBase,cooldown:0,furioso:false,fase:1,t:0 };
+    }
+    const colisionan=(a,b)=>a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
+
+    /* ===========================================================
+       CONSTRUCCIÓN DE NIVEL
+       =========================================================== */
+    function construirNivel(nivel=1){
+      estado.plataformas=[]; estado.enemigos=[]; estado.jefe=null; estado.balas=[]; estado.balasEnemigas=[];
+      estado.trampas=[]; estado.powerups=[]; estado.bajas=0; estado.temporizadorAparicion=0; estado.jefeAparecido=false;
+      estado.generadosNivel=0;
+
+      const factor=factorDisparoNivel(nivel);
+      estado.aparicionCada=estado.parametros.aparicionCada;
+      estado.tasaDisparo=Math.round(estado.parametros.tasaDisparo*factor);
+      estado.balasPorDisparo=1; estado.friccion=estado.friccionBase; estado.tiempoMejoraBalas=0;
+
+      estado.temaFondo=temaPorNivel(nivel);
+
+      // Suelo largo
+      const segs=(nivel===1)?600:(nivel===2?900:1100);
+      for(let i=0;i<segs;i++) estado.plataformas.push({x:i*200,y:420,w:200,h:120,tipo:'suelo',dx:0,dy:0});
+
+      if(nivel===1){
+        const P=[{x:220,y:340,w:120,h:20,tipo:'estatico'},{x:370,y:300,w:90,h:20,tipo:'estatico'},
+                 {x:500,y:260,w:120,h:20,tipo:'estatico'},{x:780,y:320,w:140,h:20,tipo:'estatico'},
+                 {x:980,y:280,w:100,h:20,tipo:'estatico'},{x:1180,y:250,w:110,h:20,tipo:'estatico'}];
+        estado.plataformas.push(...P);
+        estado.plataformas.push({x:1500,y:320,w:140,h:20,tipo:'movil',rango:120,vel:0.08,baseX:1500,dir:1,dx:0,dy:0});
+        estado.plataformas.push({x:1720,y:280,w:110,h:20,tipo:'cae',activa:false,tiempo:0,dx:0,dy:0,vy:0});
+        estado.trampas.push({tipo:'pinchos',x:900,y:400,w:80,h:20});
+        estado.trampas.push({tipo:'laser',x:1350,y:360,w:180,h:6,periodo:1800,activo:false,t:0});
+        estado.trampas.push({tipo:'sierra',x:2000,y:360,w:28,h:28,baseX:2000,rango:160,vel:0.15,dir:1});
+      } else if(nivel===2){
+        const P2=[{x:260,y:330,w:140,h:20,tipo:'estatico'},{x:460,y:290,w:110,h:20,tipo:'estatico'},
+                  {x:740,y:260,w:130,h:20,tipo:'estatico'},{x:1020,y:310,w:140,h:20,tipo:'estatico'},
+                  {x:1280,y:270,w:110,h:20,tipo:'estatico'},{x:1500,y:240,w:120,h:20,tipo:'estatico'}];
+        estado.plataformas.push(...P2);
+        estado.plataformas.push({x:1700,y:320,w:140,h:20,tipo:'movil',rango:160,vel:0.10,baseX:1700,dir:1,dx:0,dy:0});
+        estado.plataformas.push({x:1950,y:280,w:110,h:20,tipo:'cae',activa:false,tiempo:0,dx:0,dy:0,vy:0});
+        estado.trampas.push({tipo:'laser',x:1200,y:360,w:260,h:6,periodo:1500,activo:false,t:0});
+        estado.trampas.push({tipo:'pinchos',x:1550,y:400,w:120,h:20});
+        estado.trampas.push({tipo:'sierra',x:2000,y:360,w:32,h:32,baseX:2000,rango:220,vel:0.18,dir:1});
+      } else {
+        const P3=[{x:240,y:340,w:120,h:20,tipo:'estatico'},{x:420,y:300,w:110,h:20,tipo:'estatico'},
+                  {x:660,y:265,w:120,h:20,tipo:'estatico'},{x:880,y:295,w:140,h:20,tipo:'estatico'},
+                  {x:1150,y:255,w:110,h:20,tipo:'estatico'},{x:1380,y:225,w:120,h:20,tipo:'estatico'}];
+        estado.plataformas.push(...P3);
+        estado.plataformas.push({x:1600,y:320,w:140,h:20,tipo:'movil',rango:190,vel:0.12,baseX:1600,dir:1,dx:0,dy:0});
+        estado.plataformas.push({x:1850,y:280,w:110,h:20,tipo:'cae',activa:false,tiempo:0,dx:0,dy:0,vy:0});
+        estado.plataformas.push({x:2300,y:300,w:140,h:20,tipo:'movil',rango:150,vel:0.11,baseX:2300,dir:1,dx:0,dy:0});
+        estado.trampas.push({tipo:'laser',x:1100,y:350,w:140,h:6,periodo:1200,activo:false,t:0});
+        estado.trampas.push({tipo:'laser',x:1280,y:330,w:140,h:6,periodo:1200,activo:false,t:600});
+        estado.trampas.push({tipo:'laser',x:1460,y:310,w:140,h:6,periodo:1200,activo:false,t:300});
+        estado.trampas.push({tipo:'sierra',x:1750,y:360,w:30,h:30,baseX:1750,rango:180,vel:0.20,dir:1});
+        estado.trampas.push({tipo:'sierra',x:2150,y:360,w:34,h:34,baseX:2150,rango:240,vel:0.22,dir:-1});
+        estado.trampas.push({tipo:'pinchos',x:2600,y:400,w:160,h:20});
+      }
+
+      // Jugador y HUD
+      estado.jugador=crearJugador(); estado.camaraX=0; estado.puntoControlX=40; estado.vidas=estado.parametros.vidas;
+      estado.nombreNivel = nivel===1?'Mundo 1-1':(nivel===2?'Mundo 2-1':'Mundo 3-1');
+    }
+
+    /* ===========================================================
+       DIBUJO
+       =========================================================== */
+    const mundoX=x=>Math.floor((x-estado.camaraX)*RPD);
+    const mundoY=y=>Math.floor(y*RPD);
+    function rect(x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(mundoX(x),mundoY(y),Math.ceil(w*RPD),Math.ceil(h*RPD)); }
+
+    // FONDO
+    function fondo(){
+      const w=ANCHO(), h=ALTO(), tema=estado.temaFondo, img=fondos[tema];
+      if(img && img.complete && img.naturalWidth && img.naturalHeight){
+        const iw=img.naturalWidth, ih=img.naturalHeight;
+        const scale=Math.max(w/iw, h/ih), dw=Math.ceil(iw*scale), dh=Math.ceil(ih*scale);
+        const dx=Math.floor((w-dw)/2), dy=Math.floor((h-dh)/2);
+        ctx.drawImage(img, 0,0, iw,ih, dx,dy, dw,dh);
+        return;
+      }
+      // Fallbacks
+      const estrellas=(n=80, par=.2)=>{ ctx.globalAlpha=.6; for(let i=0;i<n;i++){ const x=(i*73-estado.camaraX*par)%w; const y=(i*129)%h; ctx.fillStyle='#ffffff14'; ctx.fillRect(x,y,2,2);} ctx.globalAlpha=1; };
+      if(tema==='Amanecer'){
+        const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,'#ffedd5'); g.addColorStop(1,'#fecdd3'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+        ctx.globalAlpha=.15; ctx.beginPath(); ctx.arc(w*.2,h*.3,150,0,Math.PI*2); ctx.fillStyle='#fbbf24'; ctx.fill(); ctx.globalAlpha=1;
+      } else if(tema==='Espacio'){
+        ctx.fillStyle='#060912'; ctx.fillRect(0,0,w,h); estrellas(130,.1);
+        ctx.globalAlpha=.3; ctx.beginPath(); ctx.arc(w*.8,h*.25,120,0,Math.PI*2); ctx.fillStyle='#6366f1'; ctx.fill(); ctx.globalAlpha=1;
+      } else {
+        const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,'#06111e'); g.addColorStop(1,'#0a1b2e');
+        ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+        ctx.globalAlpha=.15; ctx.strokeStyle='#22d3ee55'; ctx.beginPath();
+        for(let x=0;x<w;x+=28){ ctx.moveTo((x-(estado.camaraX*.6)%28),0); ctx.lineTo((x-(estado.camaraX*.6)%28),h); }
+        for(let y=0;y<h;y+=28){ ctx.moveTo(0,y); ctx.lineTo(w,y); }
+        ctx.stroke(); ctx.globalAlpha=1; estrellas(90,.18);
+      }
+    }
+
+    function dibujar(){
+      ctx.clearRect(0,0,ANCHO(),ALTO());
+      fondo();
+
+      for(const p of estado.plataformas){
+        const c=p.tipo==='suelo'?'#0b1322':(p.tipo==='movil'?'#123b58':p.tipo==='cae'?'#3a1f1f':'#162744');
+        rect(p.x,p.y,p.w,p.h,c);
+      }
+      for(const tr of estado.trampas){
+        if(tr.tipo==='pinchos'){
+          ctx.fillStyle='#7f1d1d'; const n=4;
+          for(let i=0;i<n;i++){ const bx=mundoX(tr.x+i*(tr.w/n)), by=mundoY(tr.y); const w=Math.ceil((tr.w/n)*RPD), h=Math.ceil(tr.h*RPD);
+            ctx.beginPath(); ctx.moveTo(bx,by+h); ctx.lineTo(bx+w/2,by); ctx.lineTo(bx+w,by+h); ctx.closePath(); ctx.fill();
+          }
+        } else if(tr.tipo==='laser'){
+          rect(tr.x,tr.y,tr.w,tr.h, tr.activo?'#ef4444':'#661a1a');
+        } else if(tr.tipo==='sierra'){
+          const r=tr.w; ctx.beginPath(); ctx.arc(mundoX(tr.x+r/2), mundoY(tr.y+r/2), Math.ceil((r/2)*RPD), 0, Math.PI*2);
+          ctx.fillStyle='#9ca3af'; ctx.fill(); ctx.strokeStyle='#4b5563'; ctx.lineWidth=2; ctx.stroke();
+        }
+      }
+
+      for(const p of estado.powerups){
+        rect(p.x,p.y,p.w,p.h, p.clase==='bala' ? '#fbbf24' : '#34d399');
+      }
+
+      for(const b of estado.balas) rect(b.x,b.y,b.w,b.h,'#facc15');          // jugador
+      for(const b of estado.balasEnemigas) rect(b.x,b.y,b.w,b.h,'#fb7185');  // enemigo
+
+      for(const e of estado.enemigos){
+        if(e.muerto) continue;
+        if(botListo){ ctx.drawImage(imgBot, mundoX(e.x), mundoY(e.y), Math.ceil(e.w*RPD), Math.ceil(e.h*RPD)); }
+        else { rect(e.x,e.y,e.w,e.h,'#ef4444'); rect(e.x+6,e.y+6,e.w-12,e.h-18,'#7f1d1d'); }
+      }
+
+      const J=estado.jefe;
+      if(J){
+        if(jefeListo){ ctx.drawImage(imgJefe, mundoX(J.x), mundoY(J.y), Math.ceil(J.w*RPD), Math.ceil(J.h*RPD)); }
+        else { rect(J.x,J.y,J.w,J.h,'#a855f7'); rect(J.x+8,J.y+8,J.w-16,J.h-24,'#4c1d95'); }
+      }
+
+      const ju=estado.jugador;
+      if(jugadorListo){ ctx.drawImage(imgJugador, mundoX(ju.x), mundoY(ju.y), Math.ceil(ju.w*RPD), Math.ceil(ju.h*RPD)); }
+      else { rect(ju.x,ju.y,ju.w,ju.h,'#22d3ee'); rect(ju.x+6,ju.y+6,ju.w-12,ju.h-16,'#155e75'); }
+    }
+
+    /* ===========================================================
+       FÍSICA / COLISIONES / PLATAFORMAS & TRAMPAS
+       =========================================================== */
+    function aplicarFisica(o,dt){ o.vy+=estado.gravedad*dt; o.x+=o.vx*dt; colisionX(o); o.y+=o.vy*dt; o.enSuelo=false; o._plataforma=null; colisionY(o); }
+    function colisionX(o){ for(const p of estado.plataformas){ if(!colisionan(o,p)) continue; if(o.vx>0){o.x=p.x-o.w; o.vx=0;} else if(o.vx<0){o.x=p.x+p.w; o.vx=0;} } }
+    function colisionY(o){ for(const p of estado.plataformas){ if(!colisionan(o,p)) continue; if(o.vy>0){ o.y=p.y-o.h; o.vy=0; o.enSuelo=true; o._plataforma=p; } else if(o.vy<0){ o.y=p.y+p.h; o.vy=0; } } }
+
+    function actualizarPlataformasYTrampas(dt){
+      for(const p of estado.plataformas){ if(p.tipo==='movil'){ const prevX=p.x; p.x=p.baseX+Math.sin(Date.now()/1000*p.vel)*p.rango; p.dx=p.x-prevX; p.dy=0; } }
+      const ju=estado.jugador; if(ju.enSuelo && ju._plataforma && ju._plataforma.tipo==='movil'){ ju.x+=ju._plataforma.dx; }
+
+      for(const p of estado.plataformas){ if(p.tipo==='cae'){ if(!p.activa && ju.y+ju.h<=p.y+2 && ju.y+ju.h>=p.y-2 && ju.x+ju.w>p.x && ju.x<p.x+p.w){ p.activa=true; p.tiempo=280; } if(p.activa){ if(p.tiempo>0){ p.tiempo-=dt; } else { p.vy+=estado.gravedad*dt; p.y+=p.vy*dt; } } } }
+
+      for(const tr of estado.trampas){
+        if(tr.tipo==='laser'){ tr.t=(tr.t||0)+dt; tr.activo=(Math.floor(tr.t/(tr.periodo/2))%2)===0; }
+        else if(tr.tipo==='sierra'){ tr.x+=tr.vel*tr.dir*dt; if(tr.x>tr.baseX+tr.rango){tr.x=tr.baseX+tr.rango; tr.dir=-1;} if(tr.x<tr.baseX-tr.rango){tr.x=tr.baseX-tr.rango; tr.dir=1;} }
+      }
+    }
+
+    /* ===========================================================
+       ENEMIGOS / OLEADAS
+       =========================================================== */
+    function actualizarEnemigos(dt){
+      estado.temporizadorAparicion+=dt;
+
+      const activos=estado.enemigos.filter(e=>!e.muerto && e.tipoBase==='bot').length;
+
+      if(
+        estado.temporizadorAparicion>estado.aparicionCada &&
+        activos < MAX_BOTS_CONCURRENTES &&
+        estado.generadosNivel < OBJETIVO_BOTS_POR_NIVEL
+      ){
+        estado.temporizadorAparicion=0;
+        const baseX=estado.camaraX+(ANCHO()/RPD)+100, baseY=360;
+
+        const patron = Math.random()<0.4 ? 'linea' : (Math.random()<0.5 ? 'V' : 'zigzag');
+        spawnearOleada(patron,baseX,baseY);
+
+        if(
+          Math.random()<0.45 &&
+          estado.generadosNivel < OBJETIVO_BOTS_POR_NIVEL
+        ){
+          const patron2 = Math.random()<0.5 ? 'zigzag' : 'linea';
+          spawnearOleada(patron2, baseX+90, baseY);
+        }
+
+        estado.aparicionCada=Math.max(estado.parametros.aparicionMin, estado.aparicionCada-estado.parametros.aparicionDec);
+      }
+
+      const ju=estado.jugador;
+      for(const e of estado.enemigos){
+        if(e.muerto) continue;
+        if(e.tipo==='saltarin'){ if(e.enSuelo && e.cd<=0 && Math.random()<0.02){ e.vy=-0.5; e.cd=600; } else e.cd-=dt; }
+        if(e.tipo==='kamikaze'){ const dir=ju.x>e.x?1:-1; e.vx=Math.sign(dir)*Math.abs(e.vx); e.vx*=1.02; if(Math.abs(ju.x-e.x)<20 && Math.abs(ju.y-e.y)<30){ explotar(e); continue; } }
+        if(e.tipo==='tirador'){ e.cd-=dt; if(e.cd<=0){ dispararEnemigo(e,ju); e.cd=estado.parametros.cdTirador; } }
+
+        e.vy+=estado.gravedad*dt; e.x+=e.vx*dt; e.y+=e.vy*dt; colisionX(e); colisionY(e);
+        if(e.patrulla){ if(e.x<e.patrulla[0]){e.x=e.patrulla[0]; e.vx=Math.abs(e.vx);} if(e.x+e.w>e.patrulla[1]){e.x=e.patrulla[1]-e.w; e.vx=-Math.abs(e.vx);} }
+
+        if(colisionan(ju,e)){
+          const pisoton=(ju.vy>0)&&(ju.y+ju.h-e.y<18);
+          if(pisoton){ matarEnemigo(e,true); ju.vy=-ju.salto*0.7; }
+          else golpearJugador();
+        }
+      }
+      estado.enemigos=estado.enemigos.filter(e=>!e.muerto || e.y<2000);
+    }
+
+    function spawnearOleada(patron, baseX, baseY){
+      const tipos=estado.parametros.tiposPermitidos;
+      const pickTipo=()=>tipos[Math.floor(Math.random()*tipos.length)];
+
+      const activos=estado.enemigos.filter(e=>!e.muerto && e.tipoBase==='bot').length;
+      let quedanConc = MAX_BOTS_CONCURRENTES - activos;
+      let quedanTotal = OBJETIVO_BOTS_POR_NIVEL - estado.generadosNivel;
+      if(quedanConc<=0 || quedanTotal<=0) return;
+
+      const agregar = (dx,dy)=>{
+        if(quedanConc<=0 || quedanTotal<=0) return;
+        estado.enemigos.push(crearEnemigo(baseX+dx, baseY+dy, pickTipo()));
+        estado.generadosNivel++; quedanConc--; quedanTotal--;
+      };
+
+      if(patron==='linea'){
+        for(let i=0;i<5;i++) agregar(i*40,0);
+      }else if(patron==='V'){
+        const plan=[{dx:0,dy:-28},{dx:36,dy:-14},{dx:72,dy:0},{dx:108,dy:-14},{dx:144,dy:-28}];
+        for(const p of plan) agregar(p.dx,p.dy);
+      }else{ // zigzag
+        for(let i=0;i<6;i++) agregar(i*36, i%2?0:-24);
+      }
+    }
+
+    function explotar(e){
+      e.muerto=true; bip(120,.12,'sawtooth',.1);
+      const ju=estado.jugador; const dx=ju.x-(e.x+e.w/2), dy=ju.y-(e.y+e.h/2); const dist=Math.hypot(dx,dy);
+      if(dist<60) golpearJugador();
+      estado.puntaje+=40; estado.bajas++;
+      dropPowerUp(e.x,e.y);
+      if(!estado.jefeAparecido && estado.bajas>=estado.parametros.killsBoss) aparecerJefe();
+      actualizarHUD();
+    }
+
+    /* ===========================================================
+       POWER-UPS
+       =========================================================== */
+    function dropPowerUp(x,y){
+      const conf=(estado.dificultad==='Fácil')?{bala:0.18,escudo:0.22}:(estado.dificultad==='Pro')?{bala:0.08,escudo:0.12}:{bala:0.12,escudo:0.18};
+      const r=Math.random();
+      if(r<conf.bala) estado.powerups.push({clase:'bala',x,y:y-10,w:14,h:14,vx:0,vy:-0.2,vida:8000});
+      else if(r<conf.bala+conf.escudo) estado.powerups.push({clase:'escudo',x,y:y-10,w:14,h:14,vx:0,vy:-0.2,vida:8000});
+    }
+    function actualizarPowerUps(dt){
+      for(const p of estado.powerups){
+        p.vy+=estado.gravedad*dt*0.6; p.x+=(p.vx||0)*dt; p.y+=p.vy*dt; p.vida-=dt;
+        for(const pl of estado.plataformas){ if(colisionan(p,pl)){ p.y=pl.y-p.h; p.vy=0; } }
+        if(colisionan(p,estado.jugador)){
+          if(p.clase==='bala'){ estado.balasPorDisparo=3; estado.tiempoMejoraBalas=8000; bip(1000,.08,'triangle',.08); }
+          else if(p.clase==='escudo'){ estado.escudo=limitar(estado.escudo+1,0,3); bip(500,.08,'sine',.08); }
+          p.vida=0; actualizarHUD();
+        }
+      }
+      if(estado.tiempoMejoraBalas>0){
+        estado.tiempoMejoraBalas-=dt;
+        if(estado.tiempoMejoraBalas<=0){ estado.balasPorDisparo=(estado.jefeAparecido?3:1); }
+      }
+      estado.powerups=estado.powerups.filter(p=>p.vida>0 && p.y<2000);
+    }
+
+    /* ===========================================================
+       JEFE
+       =========================================================== */
+    function actualizarJefe(dt){
+      const J=estado.jefe; if(!J) return;
+      J.vy+=estado.gravedad*dt; J.x+=J.vx*dt; J.y+=J.vy*dt; colisionX(J); colisionY(J);
+      const ju=estado.jugador; const dir=ju.x>J.x?1:-1;
+      let mult=1; if(J.fase===2) mult=1.3; if(J.fase===3) mult=1.55;
+      const mulDif=(estado.dificultad==='Fácil'?0.75:estado.dificultad==='Pro'?1.15:1);
+      J.vx=0.12*mulDif*dir*mult;
+
+      const baseProb=(J.fase===1?0.004:(J.fase===2?0.007:0.012));
+      const probSalto=baseProb*(estado.dificultad==='Fácil'?0.7:estado.dificultad==='Pro'?1.2:1);
+      if(J.enSuelo && Math.random()<probSalto){ J.vy=-0.5*(J.fase===3?1.35:(J.fase===2?1.2:1)); }
+
+      // Invocar adds en fase 3
+      J.t+=dt; if(J.fase>=3 && J.t>1800){ J.t=0; const bx=J.x+(Math.random()<.5?-120:120); estado.enemigos.push(crearEnemigo(bx,360, Math.random()<.5?'saltarin':'kamikaze')); }
+
+      if(colisionan(ju,J)){
+        const pisoton=(ju.vy>0)&&(ju.y+ju.h-J.y<22);
+        if(pisoton){ daniarJefe(1); ju.vy=-ju.salto; } else golpearJugador();
+      }
+
+      if(!J._50 && J.hp<=J.hpMax*0.5){ J._50=true; J.fase=2; bip(500,.2,'square',.08); }
+      if(!J._25 && J.hp<=J.hpMax*0.25){ J._25=true; J.fase=3; J.furioso=true; bip(300,.25,'sawtooth',.1); }
+
+      hudJefe.style.display='inline-flex'; hudJefe.textContent='Jefe '+ '❤'.repeat(Math.max(0,J.hp));
+    }
+
+    /* ===========================================================
+       DAÑO AL JUGADOR
+       =========================================================== */
+    function golpearJugador(){
+      const ju=estado.jugador;
+      if(estado.escudo>0){
+        estado.escudo--; ju.invulnerable=(estado.dificultad==='Fácil'?1000:650);
+        bip(320,.08,'square',.08); actualizarHUD(); return;
+      }
+      if(ju.invulnerable>0) return;
+      herirJugador();
+    }
+    function herirJugador(){
+      const ju=estado.jugador;
+      estado.vidas--; ju.invulnerable=(estado.dificultad==='Fácil'?1600:1200); bip(200,.1,'square',.08);
+      if(estado.vidas<0){ juegoTerminado(); return; }
+      ju.x=estado.puntoControlX; ju.y=380; ju.vx=0.15; ju.vy=0; estado.camaraX=ju.x-100; actualizarHUD();
+    }
+
+    /* ===========================================================
+       DISPAROS
+       =========================================================== */
+    function disparar(){
+      const ju=estado.jugador; const vel=0.6;
+      const by=ju.y+12; const bx=ju.x+ju.w/2+18*ju.mirando; const tiros=estado.balasPorDisparo;
+      if(tiros===1) estado.balas.push({x:bx,y:by,w:10,h:4,vx:vel*ju.mirando,vy:0,vida:2000});
+      else{
+        const disp=0.22, mid=(tiros-1)/2;
+        for(let i=0;i<tiros;i++){ const ang=(i-mid)*disp; const vx=vel*Math.cos(ang)*ju.mirando; const vy=vel*Math.sin(ang);
+          estado.balas.push({x:bx,y:by,w:10,h:4,vx,vy,vida:2000});
+        }
+      }
+      bip(900,.04,'triangle',.06);
+    }
+
+    function dispararEnemigo(e, ju){
+      const sp = estado.parametros.velBalaEnemiga;
+      const vida = estado.parametros.vidaBalaEnemiga;
+      const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+      const dx = ju.x + ju.w / 2 - cx, dy = ju.y + ju.h / 2 - cy;
+      const angBase = Math.atan2(dy, dx);
+      const tiros = Math.max(1, estado.parametros.tiradorRafaga | 0);
+      const disp = estado.parametros.tiradorDispersion || 0;
+      const mid = (tiros - 1) / 2;
+      for (let i = 0; i < tiros; i++) {
+        const ang = angBase + (i - mid) * disp;
+        const vx = Math.cos(ang) * sp, vy = Math.sin(ang) * sp;
+        estado.balasEnemigas.push({ x: cx, y: cy, w: 8, h: 3, vx, vy, vida });
+      }
+      bip(650, .03, 'sine', .05);
+    }
+
+    function actualizarBalas(dt){
+      for(const b of estado.balas){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.vida-=dt; }
+      for(const b of estado.balasEnemigas){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.vida-=dt; }
+
+      // Jugador → Enemigos/Jefe
+      for(const b of estado.balas){
+        if(b.muerta) continue;
+        for(const e of estado.enemigos){
+          if(e.muerto) continue;
+          if(colisionan(b,e)){
+            b.muerta=true;
+            if(e.tipo==='blindado'){ e.hp--; if(e.hp<=0) matarEnemigo(e,false); else bip(300,.03,'square',.04); }
+            else matarEnemigo(e,false);
+            break;
+          }
+        }
+        if(estado.jefe && !b.muerta && colisionan(b,estado.jefe)){ b.muerta=true; daniarJefe(1); }
+      }
+
+      // Bala vs Bala
+      for(const b of estado.balas){
+        if(b.muerta) continue;
+        for(const eb of estado.balasEnemigas){
+          if(eb.muerta) continue;
+          if(colisionan(b,eb)){ b.muerta=true; eb.muerta=true; estado.puntaje+=2; break; }
+        }
+      }
+
+      // Enemigo → Jugador
+      const ju=estado.jugador;
+      for(const eb of estado.balasEnemigas){ if(!eb.muerta && colisionan(eb,ju)){ eb.muerta=true; golpearJugador(); } }
+
+      const xmin=estado.camaraX-200, xmax=estado.camaraX+(ANCHO()/RPD)+600;
+      estado.balas=estado.balas.filter(b=>!b.muerta && b.vida>0 && b.x>xmin && b.x<xmax);
+      estado.balasEnemigas=estado.balasEnemigas.filter(b=>!b.muerta && b.vida>0 && b.x>xmin && b.x<xmax);
+    }
+
+    function matarEnemigo(e,porPisoton){
+      e.muerto=true; estado.puntaje+=porPisoton?50:30; estado.bajas++;
+      dropPowerUp(e.x,e.y);
+      if(!estado.jefeAparecido && estado.bajas>=estado.parametros.killsBoss) aparecerJefe();
+      actualizarHUD(); bip(porPisoton?1000:800,.07,'sawtooth',.07);
+    }
+    function aparecerJefe(){
+      estado.jefe=crearJefe(estado.camaraX+(ANCHO()/RPD)+220,356); estado.jefeAparecido=true; hudJefe.style.display='inline-flex';
+      estado.balasPorDisparo=3;                    // mejora de arma cuando sale el jefe
+      estado.tasaDisparo=Math.round(estado.tasaDisparo*0.9);
+    }
+    function daniarJefe(d){
+      if(!estado.jefe) return; estado.jefe.hp-=d; estado.puntaje+=20;
+      if(estado.jefe.hp<=0){
+        if(estado.nivel===1){ pasarANivel(2); }
+        else if(estado.nivel===2){ pasarANivel(3); }
+        else { victoriaFinal(); }
+      }
+      actualizarHUD();
+    }
+
+ 
+    function bucle(t){
+      if(!estado.corriendo || estado.pausado) return;
+      const dt=Math.min(32, t-(estado.ultimo||t)); estado.ultimo=t;
+
+      const ju=estado.jugador;
+      const minRun=(estado.dificultad==='Fácil'?0.14:0.17);
+      ju.vx=Math.max(ju.vx, minRun);             // avance automático mínimo
+      estado.camaraX=limitar(ju.x-140,0,Infinity);
+
+      // (Opcional) flechas izquierda/derecha para microajuste en PC
+      const ax=(estado.teclas.izquierda?-1:0)+(estado.teclas.derecha?1:0);
+      ju.vx+=ax*ju.velocidad*dt;
+
+      ju.vx*=estado.friccion; if(Math.abs(ju.vx)<0.01) ju.vx=0.08; ju.mirando=ju.vx>=0?1:-1;
+
+      if(ju.enSuelo){
+        if(estado.teclas.super){ ju.vy=-ju.salto*estado.factorSuperSalto; ju.enSuelo=false; bip(820,.08,'square',.08); }
+        else if(estado.teclas.saltar){ ju.vy=-ju.salto; ju.enSuelo=false; bip(700,.06,'square',.06); }
+      }
+
+      if(estado.enfriamientoDisparo>0) estado.enfriamientoDisparo-=dt;
+      if(estado.teclas.disparar && estado.enfriamientoDisparo<=0){ disparar(); estado.enfriamientoDisparo=estado.tasaDisparo; }
+
+      aplicarFisica(ju,dt); if(ju.invulnerable>0) ju.invulnerable-=dt;
+      actualizarPlataformasYTrampas(dt);
+      actualizarPowerUps(dt);
+      actualizarBalas(dt);
+      actualizarEnemigos(dt);
+      actualizarJefe(dt);
+
+      for(const tr of estado.trampas){
+        if(tr.tipo==='pinchos' && colisionan(estado.jugador,tr)) golpearJugador();
+        if(tr.tipo==='laser' && tr.activo && colisionan(estado.jugador,tr)) golpearJugador();
+        if(tr.tipo==='sierra'){ const r=tr.w/2; const cx=tr.x+r, cy=tr.y+r; if( ju.x<cx+r && ju.x+ju.w>cx-r && ju.y<cy+r && ju.y+ju.h>cy-r ) golpearJugador(); }
+      }
+
+      dibujar();
+      requestAnimationFrame(bucle);
+    }
+
+
+    function juegoTerminado(){
+      estado.corriendo=false; estado.siguienteNivel=false; hudJefe.style.display='none';
+      mostrarOverlayGeneral('💀 Juego terminado', `Puntos: <strong>${estado.puntaje}</strong> • Kills: <strong>${estado.bajas}</strong>`);
+    }
+    function victoriaFinal(){
+      estado.corriendo=false; estado.siguienteNivel=false; hudJefe.style.display='none';
+      mostrarOverlayGeneral('🏁 ¡Victoria total!', `Ganaste los <strong>3 niveles</strong> • Puntos: <strong>${estado.puntaje}</strong> • Kills: <strong>${estado.bajas}</strong>`);
+    }
+    function pasarANivel(n){
+      estado.corriendo=false; estado.siguienteNivel=true; hudJefe.style.display='none'; estado.nivel=n;
+      mostrarOverlayGeneral(`🚀 Nivel ${n} listo`, `Fondo: <strong>${temaPorNivel(n)}</strong> • Tu arma dispara <strong>más rápido</strong>.`);
+    }
+
+    function actualizarHUD(){
+      hudPuntaje.textContent=`Puntos: ${estado.puntaje} • Kills: ${estado.bajas}`;
+      hudVidas.textContent=`Vidas: ${estado.vidas}`;
+      hudNivel.textContent=estado.nombreNivel;
+      if(estado.escudo>0){ hudEscudo.style.display='inline-flex'; hudEscudo.textContent=`Escudo x${estado.escudo}`; }
+      else { hudEscudo.style.display='none'; }
+    }
+
+    function mostrarOverlayPausa(){
+      overlay.innerHTML=`
+        <div class="panel">
+          <h1>⏸ Pausa</h1>
+          <p>Puedes ajustar la dificultad en cualquier momento.</p>
+          <div class="fila">
+            <label class="campo">⚙️ Dificultad
+              <select id="selDificultadP"><option>Fácil</option><option>Medio</option><option>Pro</option></select>
+            </label>
+          </div>
+          <div class="acciones">
+            <button class="btn primary" id="btnReanudar">Reanudar</button>
+            <button class="btn" id="btnSilencio2">${silenciado?'🔇 Sonido':'🔊 Sonido'}</button>
+          </div>
+          <p style="opacity:.8;margin-top:8px">Niveles: 1 Amanecer → 2 Espacio → 3 Ciber.</p>
+        </div>`;
+      overlay.style.display='grid';
+      const sd=document.getElementById('selDificultadP'); sd.value=estado.dificultad; sd.addEventListener('change',e=>aplicarDificultad(e.target.value));
+      document.getElementById('btnReanudar').onclick=()=>pausar(true);
+      document.getElementById('btnSilencio2').onclick=alternarSilencio;
+    }
+
+    function mostrarOverlayGeneral(titulo,html){
+      overlay.innerHTML=`
+        <div class="panel">
+          <h1>${titulo}</h1>
+          <p>${html}</p>
+          <p style="margin-top:6px">Pausa <span class="kbd">P</span> • Súper salto <span class="kbd">Shift/A</span> • En móvil usa los botones.</p>
+          <div class="fila">
+            <label class="campo">⚙️ Dificultad
+              <select id="selDificultad2"><option>Fácil</option><option>Medio</option><option>Pro</option></select>
+            </label>
+          </div>
+          <div class="acciones">
+            <button class="btn primary" id="btnContinuar">${estado.siguienteNivel?'Continuar':'Reintentar'}</button>
+            <button class="btn" id="btnSilencio2">${silenciado?'🔇 Sonido':'🔊 Sonido'}</button>
+          </div>
+        </div>`;
+      overlay.style.display='grid';
+      const sd2=document.getElementById('selDificultad2'); sd2.value=estado.dificultad; sd2.addEventListener('change',e=>aplicarDificultad(e.target.value));
+      document.getElementById('btnContinuar').onclick=()=>iniciar(!estado.siguienteNivel);
+      document.getElementById('btnSilencio2').onclick=alternarSilencio;
+    }
+
+    function iniciar(resetPuntaje=true){
+      overlay.style.display='none';
+      if(resetPuntaje){ estado.puntaje=0; estado.nivel=1; } // “Empezar” o “Reintentar” vuelve a nivel 1
+      estado.vidas=estado.parametros.vidas; estado.escudo=0; estado.jefeAparecido=false;
+      construirNivel(estado.nivel); actualizarHUD();
+      estado.corriendo=true; estado.pausado=false; estado.ultimo=0; estado.siguienteNivel=false;
+      actualizarBotonPausa();
+      requestAnimationFrame(bucle);
+      ctxAudio.resume && ctxAudio.resume();
+      checkOrientationOverlay();
+    }
+    function pausar(reanudar=false){
+      estado.pausado=!reanudar;
+      if(estado.pausado){ mostrarOverlayPausa(); }
+      else{ overlay.style.display='none'; estado.ultimo=0; requestAnimationFrame(bucle); }
+      actualizarBotonPausa();
+    }
+    function aplicarDificultad(nombre){ estado.dificultad=nombre; estado.parametros=DIFICULTADES[nombre]||DIFICULTADES['Fácil']; }
+    function alternarSilencio(){ silenciado=!silenciado; btnSilencio.textContent=silenciado?'🔇 Sonido':'🔊 Sonido'; btnSilencioTopo.textContent=silenciado?'🔇':'🔊'; bip(600,.05); }
+    function actualizarBotonPausa(){ if(btnPausa) btnPausa.textContent=estado.pausado?'▶︎ Reanudar':'⏸ Pausa'; }
+
+    
+    addEventListener('keydown',e=>{
+      if(['ArrowLeft','ArrowRight','Space','KeyZ'].includes(e.code) || ['ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+      if(e.key==='ArrowLeft') estado.teclas.izquierda=true;
+      if(e.key==='ArrowRight') estado.teclas.derecha=true;
+      if(e.code==='Space'||e.code==='KeyZ') estado.teclas.saltar=true;
+      if(['ShiftLeft','ShiftRight','KeyA'].includes(e.code)) estado.teclas.super=true;
+      if(['KeyX','ControlLeft','ControlRight'].includes(e.code)) estado.teclas.disparar=true;
+      if(e.code==='KeyP'){ if(!estado.corriendo) return; if(!estado.pausado) pausar(false); else pausar(true); }
+    },{passive:false});
+    addEventListener('keyup',e=>{
+      if(e.key==='ArrowLeft') estado.teclas.izquierda=false;
+      if(e.key==='ArrowRight') estado.teclas.derecha=false;
+      if(e.code==='Space'||e.code==='KeyZ') estado.teclas.saltar=false;
+      if(['ShiftLeft','ShiftRight','KeyA'].includes(e.code)) estado.teclas.super=false;
+      if(['KeyX','ControlLeft','ControlRight'].includes(e.code)) estado.teclas.disparar=false;
+    });
+
+
+    function bindHold(btn, onDown, onUp){
+      const down = (e) => {
+        // Solo botón izquierdo si es mouse
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        // Captura el puntero para seguir recibiendo los eventos aunque salgas del botón
+        if (btn.setPointerCapture) {
+          try { btn.setPointerCapture(e.pointerId); } catch(_){}
+        }
+        onDown();
+        e.preventDefault();
+      };
+      const upOrCancel = (e) => {
+        onUp();
+        if (btn.releasePointerCapture) {
+          try { btn.releasePointerCapture(e.pointerId); } catch(_){}
+        }
+        e.preventDefault?.();
+      };
+
+      btn.addEventListener('pointerdown', down, { passive:false });
+      btn.addEventListener('pointerup', upOrCancel, { passive:false });
+      btn.addEventListener('pointercancel', upOrCancel, { passive:false });
+      btn.addEventListener('lostpointercapture', upOrCancel);
+    }
+
+    // Enlazar a los 3 controles táctiles
+    bindHold(btnSalto,  ()=>estado.teclas.saltar=true,   ()=>estado.teclas.saltar=false);
+    bindHold(btnSuper,  ()=>estado.teclas.super=true,    ()=>estado.teclas.super=false);
+    bindHold(btnDisparo,()=>estado.teclas.disparar=true, ()=>estado.teclas.disparar=false);
+
+    // Tap en el canvas = disparo único (respeta cooldown y dificultad)
+    lienzo.addEventListener('pointerdown', (e)=>{
+      e.preventDefault();
+      if(!estado.corriendo || estado.pausado) return;
+      if(estado.enfriamientoDisparo<=0){
+        disparar();
+        estado.enfriamientoDisparo = estado.tasaDisparo;
+        if(navigator.vibrate) try{ navigator.vibrate(10); }catch(_){}
+      }
+    }, {passive:false});
+
+    // Evitar scroll mientras se arrastra sobre un botón táctil
+    document.addEventListener('touchmove', (e)=>{
+      if (e.target && e.target.closest && e.target.closest('.btn-touch')) {
+        e.preventDefault();
+      }
+    }, { passive:false });
+
+    // Evitar scroll con flechas/espacio en algunas plataformas
+    addEventListener('keydown',e=>{ if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.key)) e.preventDefault(); },{passive:false});
+
+    // Botones de UI
+    btnEmpezar.addEventListener('click',()=>{ estado.nivel=1; iniciar(true); },{passive:true});
+    btnSilencio.addEventListener('click',alternarSilencio,{passive:true});
+    btnSilencioTopo.addEventListener('click',alternarSilencio,{passive:true});
+    btnPausa.addEventListener('click', ()=>{ if(!estado.corriendo) return; if(!estado.pausado) pausar(false); else pausar(true); },{passive:true});
+    selDificultad.addEventListener('change',e=>aplicarDificultad(e.target.value),{passive:true});
+
+    /* ===========================================================
+       OVERLAY DE ORIENTACIÓN (móvil en vertical)
+       =========================================================== */
+    function esDispositivoPequeno(){ return Math.max(window.innerWidth, window.innerHeight) < 900; }
+    function esVertical(){ return window.matchMedia && window.matchMedia("(orientation: portrait)").matches; }
+    function checkOrientationOverlay(){
+      const mostrar = esDispositivoPequeno() && esVertical();
+      rotateOverlay.style.display = mostrar ? 'grid' : 'none';
+      if(mostrar){
+        if(estado.corriendo && !estado.pausado){ pausar(false); }
+      }
+    }
+    addEventListener('orientationchange', checkOrientationOverlay);
+    addEventListener('resize', checkOrientationOverlay);
+    checkOrientationOverlay();
+  </script>
+</body>
+</html>
